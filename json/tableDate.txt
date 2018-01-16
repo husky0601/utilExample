@@ -1,0 +1,1 @@
+[{"name": "姓名1", "age": 24, "score": 79, "sex": 0},{"name": "姓名2", "age": 44, "score": 50, "sex": 0},{"name": "姓名3", "age": 25, "score": 90, "sex": 0},{"name": "姓名4", "age": 19, "score": 92, "sex": 0},{"name": "姓名5", "age": 33, "score": 80, "sex": 0},{"name": "姓名6", "age": 50, "score": 70, "sex": 1},{"name": "姓名7", "age": 20, "score": 75, "sex": 0}]
