@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>多张图片的延迟加载</title>
+    <style type="text/css">
+        /* 去除默认样式 */
+
+        * {
+            margin: 0;
+            padding: 0;
+            /* font-size: 14px; */
+            font-family: '\5FAE\8F6F\96C5\9ED1', Helvetica, sans-serif
+        }
+
+        ul,
+        li {
+            list-style: none
+        }
+
+        img {
+            display: block;
+            border: none
+        }
+        /* 容器外层 */
+
+        .news {
+            padding: 10px;
+        }
+
+        .news li {
+            height: 60px;
+            position: relative;
+            padding: 10px 0;
+            border-bottom: 1px dotted #ccc;
+        }
+
+        .news li>div:first-child {
+            position: absolute;
+            top: 10px;
+            left: 0;
+            width: 80px;
+            height: 60px;
+            background: url('../assets/image/picdefault.gif') no-repeat center center;
+            background-size: 100% 100%;
+        }
+
+        .news li>div:first-child img {
+            /* display: none; */
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+        }
+
+        .news li>div:last-child {
+            margin-left: 100px;
+            height: 60px;
+        }
+
+        .news li>div:last-child h2 {
+            height: 20px;
+            line-height: 20px;
+            font-size: 18px;
+            /* 超出一行自动裁切 */
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .news li>div:last-child p {
+            max-height: 40px;
+            line-height: 20px;
+            font-size: 12px;
+            color: #8e9999;
+            overflow: hidden
+        }
+    </style>
+</head>
+
+<body>
+    <ul id="news" class="news">
+        <!-- <li>
+            <div>
+                <img src="" alt="">
+            </div>
+            <div>
+                <h2>这是一则新闻的标题</h2>
+                <p>这是一则新闻的导语内容这是一则新闻的导语内容这是一则新闻的导语内容这是一则新闻的导语内容这是一则新闻的导语内容这是一则新闻的导语内容</p>
+            </div>
+        </li> -->
+    </ul>
+    <script type="text/javascript" src="../utils/domUtil.js"></script>
+    <script src="../utils/ajax.js"></script>
+    <script type="text/javascript">
+        var news = document.getElementById('news'),
+            imgList = news.getElementsByTagName('img'),
+            newsDate = null
+
+        function init() {
+            getDate()
+            showDate(newsDate)
+            //开始的时候（过500ms加载第一屏幕的图片），滚动条滚动的时候加载其他图片
+            window.setTimeout(handleAllImg, 500)
+            window.onscroll = handleAllImg
+        }
+
+        // 获取数据
+        function getDate() {
+            ajax({
+                url: '../json/news.txt?_=' + Math.random(),
+                async: false,
+                dataType: 'txt',
+                success: function (res) {
+                    newsDate = eval('(' + res + ')')
+
+                }
+            })
+        }
+
+        //将数据拼接
+        function showDate(newsDate) {
+            var str = ''
+            if (newsDate) {
+                for (var i = 0, len = newsDate.length; i < len; i++) {
+                    var cur = newsDate[i]
+                    str += '<li>';
+                    str += '<div><img src="" data-lazy="' + cur.img + '"></div>'
+                    str += '<div>'
+                    str += '<h2>' + cur.title + '</h2>'
+                    str += '<p>' + cur.content + '</p>'
+                    str += '</div>'
+                    str += '</li>';
+                }
+            }
+            return news.innerHTML = str
+        }
+
+        // 图片延迟加载
+        //实现单张图片延迟加载
+        function lazyImg(curImg) {
+            // var curOp = domUtil.getCss(curImg, 'opacity')
+            var oImg = new Image
+            oImg.src = curImg.getAttribute('data-lazy')
+            oImg.onload = function () {
+                curImg.src = this.src
+                curImg.style.display = 'block'
+                fadeIn(curImg)
+                oImg = null
+            }
+            curImg.isLoad = true
+        }
+
+        //循环处理多张图片延迟加载
+        function handleAllImg() {
+            for (var i = 0, len = imgList.length; i < len; i++) {
+                var curImg = imgList[i]
+                //当前的图片处理过的话，就不需要再重新进行处理
+                if (curImg.isLoad) {
+                    continue
+                }
+                //只有图片body顶部的高度（A）< 浏览器窗口底部距body的高度（B）的时候进处理：
+                // 当前图片时隐藏的，需要计算的是A父容器高度的值
+                var curImgPar = curImg.parentNode
+                var A = domUtil.offset(curImgPar).top + curImg.offsetHeight
+                var B = domUtil.win('clientHeight') + domUtil.win('scrollTop')
+                if (A < B) {
+                    lazyImg(curImg)
+                }
+            }
+        }
+
+        //实现渐现效果
+        function fadeIn(curImg) {
+            var totalTime = 500,
+                interval = 10,
+                target = 1;
+            var step = (target / totalTime) * interval
+            var curOp = 0
+            var timer = window.setInterval(function () {
+                if (curOp >= 1) {
+                    curImg.style.opacity = 1
+                    window.clearInterval(timer)
+                    return
+                }
+                curOp += step
+                curImg.style.opacity = curOp
+            }, interval)
+        }
+
+        init()
+    </script>
+</body>
+
+</html>
